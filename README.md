@@ -50,5 +50,8 @@ from 2017). Response type lanes follow EuRepoC codebook sections 52 (legal) and
 
 ## Data citation
 
-European Repository of Cyber Incidents (EuRepoC). Dataset export as named in
-the page footer. See https://eurepoc.eu/ for the codebook and terms of use.
+European Repository of Cyber Incidents (accessed 16 July 2026) https://eurepoc.eu/table-view/
+
+the European Repository of Cyber Incidents (EuRepoC) and is licensed under 
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0).
+
