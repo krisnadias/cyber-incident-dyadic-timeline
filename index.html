@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dyadic Cyber Incident Timeline (EuRepoC)</title>
+<style>
+  :root {
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-secondary: #52514e;
+    --ink-muted: #898781;
+    --gridline: #e1e0d9;
+    --baseline: #c3c2b7;
+    --blue: #2a78d6;
+    --orange: #eb6834;
+    --aqua: #1baf7a;
+    --violet: #4a3aa7;
+    --dark-red: #8f2020;
+    --row-a: #eef3f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: system-ui, "Segoe UI", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1460px; margin: 0 auto; padding: 20px 24px 48px; }
+
+  header h1 { font-size: 22px; margin: 0 0 4px; }
+  header p.sub { color: var(--ink-secondary); margin: 0 0 16px; font-size: 14px; }
+
+  .controls {
+    display: flex; flex-wrap: wrap; align-items: end; gap: 14px;
+    padding: 12px 14px; border: 1px solid var(--baseline); border-radius: 8px;
+    background: #fff; margin-bottom: 14px;
+  }
+  .controls label { display: block; font-size: 12.5px; color: var(--ink-secondary); margin-bottom: 3px; }
+  .controls select {
+    font: inherit; font-size: 14px; padding: 6px 8px; min-width: 230px;
+    border: 1px solid var(--baseline); border-radius: 6px; background: var(--surface); color: var(--ink);
+  }
+  .controls button {
+    font: inherit; font-size: 14px; padding: 7px 14px; cursor: pointer;
+    border: 1px solid var(--baseline); border-radius: 6px; background: var(--surface); color: var(--ink);
+  }
+  .controls button:hover { border-color: var(--ink-muted); }
+  .controls button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .controls .spacer { flex: 1; }
+  .pair-count { font-size: 13px; color: var(--ink-muted); align-self: center; }
+
+  #chart { border: 1px solid var(--gridline); border-radius: 8px; background: var(--surface); }
+  #empty-note {
+    display: none; padding: 40px 20px; text-align: center;
+    color: var(--ink-secondary); border: 1px dashed var(--baseline); border-radius: 8px;
+  }
+  .hint { font-size: 13px; color: var(--ink-muted); margin: 8px 2px 0; }
+
+  /* ---- details panel ---- */
+  #details {
+    display: none; margin-top: 18px; border: 1px solid var(--baseline);
+    border-left: 4px solid var(--dark-red); border-radius: 8px; background: #fff;
+    padding: 16px 20px;
+  }
+  #details h2 { font-size: 17px; margin: 0 0 2px; padding-right: 30px; }
+  #details .meta { color: var(--ink-secondary); font-size: 13.5px; margin-bottom: 10px; }
+  #details .badge {
+    display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 10px;
+    border: 1px solid var(--dark-red); color: var(--dark-red); margin-left: 8px; vertical-align: 1px;
+  }
+  #details p.desc { margin: 8px 0 14px; max-width: 950px; }
+  #details h3 { font-size: 13.5px; text-transform: uppercase; letter-spacing: .04em;
+                color: var(--ink-secondary); margin: 16px 0 6px; }
+  #details table { border-collapse: collapse; font-size: 13.5px; width: 100%; max-width: 1050px; }
+  #details th { text-align: left; font-weight: 600; color: var(--ink-secondary);
+                padding: 4px 12px 4px 0; border-bottom: 1px solid var(--baseline); white-space: nowrap; }
+  #details td { padding: 5px 12px 5px 0; border-bottom: 1px solid var(--gridline); vertical-align: top; }
+  #details tr:nth-child(even) td { background: var(--row-a); }
+  #details ul.sources { margin: 4px 0 0; padding-left: 20px; }
+  #details ul.sources li { margin-bottom: 3px; overflow-wrap: anywhere; }
+  #details a { color: var(--blue); }
+  #details .none { color: var(--ink-muted); font-size: 13.5px; }
+  #close-details {
+    float: right; border: none; background: none; font-size: 20px; line-height: 1;
+    color: var(--ink-muted); cursor: pointer; padding: 2px 6px;
+  }
+  #close-details:hover { color: var(--ink); }
+  .dot-legal, .dot-pol { font-weight: 600; }
+
+  footer { margin-top: 26px; font-size: 12.5px; color: var(--ink-muted); }
+
+  /* ---- glossary ---- */
+  #glossary { margin-top: 26px; }
+  #glossary h2 { font-size: 17px; margin: 0 0 4px; }
+  #glossary > p { color: var(--ink-secondary); font-size: 13.5px; margin: 0 0 10px; max-width: 950px; }
+  #glossary details {
+    border: 1px solid var(--baseline); border-radius: 8px; background: #fff;
+    margin-bottom: 10px; padding: 0;
+  }
+  #glossary summary {
+    cursor: pointer; font-weight: 600; font-size: 14.5px; padding: 10px 16px;
+    list-style-position: inside;
+  }
+  #glossary summary:hover { color: var(--blue); }
+  #glossary .gloss-body { padding: 2px 20px 14px; max-width: 1000px; }
+  #glossary dt { font-weight: 600; margin-top: 10px; }
+  #glossary dd { margin: 2px 0 0 0; font-size: 14px; }
+  #glossary blockquote {
+    margin: 4px 0 4px 0; padding: 2px 14px; border-left: 3px solid var(--gridline);
+    color: var(--ink-secondary); font-size: 13.5px;
+  }
+  #glossary .cite { font-size: 12.5px; color: var(--ink-muted); font-style: normal; }
+  #glossary .readmore { font-size: 13px; margin-top: 12px; }
+  #glossary a { color: var(--blue); overflow-wrap: anywhere; }
+
+  /* custom hover tooltip (positioned below the cursor) */
+  #tooltip {
+    display: none; position: fixed; z-index: 30; pointer-events: none;
+    max-width: 380px; background: #fff; border: 1px solid var(--baseline);
+    border-radius: 6px; padding: 8px 11px; font-size: 12.5px; line-height: 1.45;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.14); color: var(--ink);
+  }
+  /* countries that share incidents with the currently chosen partner */
+  .controls select option.paired { color: var(--blue); font-weight: 600; background: var(--row-a); }
+
+  @media print {
+    .no-print, .modebar { display: none !important; }
+    body { background: #fff; }
+    .wrap { max-width: none; padding: 0; }
+    #chart { border: none; }
+    #details { border-left-width: 4px; break-inside: avoid; }
+    a { text-decoration: none; color: var(--ink); }
+    #details a { color: var(--blue); }
+  }
+</style>
+<script src="plotly.min.js"></script>
+<script src="data.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Timeline of Cyber Incidents, Legal and Political Responses</h1>
+    <p class="sub">Dyadic view of the EuRepoC incident database. Pick two countries; lollipops above the
+      axis are cyber incidents (height = weighted cyber intensity), diamonds below are legal responses,
+      triangles are political responses, and the dark red step line is the HIIK offline conflict level.</p>
+  </header>
+
+  <div class="controls no-print">
+    <div>
+      <label for="sel-a">Country A</label>
+      <select id="sel-a"></select>
+    </div>
+    <button id="swap" title="Swap countries">&#8646;</button>
+    <div>
+      <label for="sel-b">Country B</label>
+      <select id="sel-b"></select>
+    </div>
+    <span class="pair-count" id="pair-count"></span>
+    <div class="spacer"></div>
+    <button id="print-btn" class="primary">Print graph</button>
+  </div>
+
+  <div id="chart"></div>
+  <div id="empty-note"></div>
+  <p class="hint no-print">Hover a marker to see all points of the same incident glow together. Click any
+    incident or response marker to see the incident details below the graph; the incident and every
+    response linked to it are highlighted together in dark red.</p>
+
+  <section id="details">
+    <button id="close-details" class="no-print" title="Clear selection">&times;</button>
+    <h2 id="det-title"></h2>
+    <div class="meta" id="det-meta"></div>
+    <p class="desc" id="det-desc"></p>
+    <h3>Legal responses</h3>
+    <div id="det-legal"></div>
+    <h3>Political responses</h3>
+    <div id="det-pol"></div>
+    <h3>Sources</h3>
+    <div id="det-sources"></div>
+  </section>
+
+  <section id="glossary">
+    <h2>Glossary</h2>
+    <p>What the response lanes and the intensity scale on this chart mean, quoted from the EuRepoC
+      codebook and the EuRepoC research paper on the EU Cyber Diplomacy Toolbox.</p>
+
+    <details>
+      <summary>Political response types (triangles)</summary>
+      <div class="gloss-body">
+        <p>The political response lanes follow section 25 of the EuRepoC codebook, which records
+          <q>in what form(s) / by which means actors responded to an incident on a political level.
+          Responses find their basis in the instruments of the CFSP</q>. Responses are coded
+          separately for four actor groups — states, international organisations, the EU, and EU
+          member states — each with outward reactions (preventive, cooperative, stabilizing) and
+          inward reactions (legislative, executive).</p>
+        <p>The EuRepoC research paper <i>Right Thoughts, Right Words, Right Actions</i> (Research
+          Paper No. 2, February 2024) describes the outward measure types, based on the EU Cyber
+          Diplomacy Toolbox implementing guidelines:</p>
+        <dl>
+          <dt>Preventive measures</dt>
+          <dd><blockquote>&ldquo;Preventive are low-intensity measures designed to avert cyberspace
+            conflicts. These consist of confidence-building measures, awareness-raising, and EU cyber
+            capacity-building measures.&rdquo; <span class="cite">(p.&nbsp;5)</span></blockquote></dd>
+          <dt>Cooperative measures</dt>
+          <dd><blockquote>&ldquo;Cooperative measures are employed to indicate the severity of
+            malevolent cyber activities for the EU and to solicit support, cooperation, or a joint
+            response from third-party countries against such activities.&rdquo;
+            <span class="cite">(p.&nbsp;5)</span></blockquote></dd>
+          <dt>Stabilizing measures</dt>
+          <dd><blockquote>&ldquo;Stabilisation provisions comprise of statements made by the High
+            Representative (HR) on behalf of the EU Council, Council conclusions, diplomatic
+            d&eacute;marches conducted by EU delegations, and diplomatic dialogues with states and
+            international or multilateral bodies.&rdquo;
+            <span class="cite">(p.&nbsp;5)</span></blockquote>
+            For non-EU actors the codebook lists the equivalents: statements by ministers of foreign
+            affairs, heads of state or government, other ministers or members of parliament, and
+            statements by a secretary-general or similar.</dd>
+          <dt>Legislative reactions</dt>
+          <dd>Inward reactions, listed in the codebook as <q>Legislative initiative</q> and
+            <q>Parliamentary investigation committee</q>.</dd>
+          <dt>Executive reactions</dt>
+          <dd>Inward reactions, listed in the codebook as <q>Removal from office</q> and
+            <q>Resignation</q>.</dd>
+        </dl>
+        <p>The paper describes these measures for the EU's toolbox; EuRepoC applies the same category
+          scheme to every actor group shown in the chart.</p>
+        <p class="readmore">Read more: <a href="https://eurepoc.eu/wp-content/uploads/2024/02/Right-Thoughts-Right-Words-Right-Actions-February-2024.pdf"
+          target="_blank" rel="noopener noreferrer">EuRepoC Research Paper No. 2, <i>Right Thoughts, Right
+          Words, Right Actions</i> (February 2024, PDF)</a></p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Legal response types (diamonds)</summary>
+      <div class="gloss-body">
+        <p>The legal response lanes follow section 52 of the EuRepoC codebook, which records
+          <q>in what form(s) / by which means actors responded to an incident on a legal level</q>.
+          Chart lane label first, codebook category in quotes:</p>
+        <dl>
+          <dt>Peaceful Retorsion</dt>
+          <dd><q>Peaceful means: Retorsion (International law)</q> — unfriendly but lawful acts:
+            expulsion of diplomatic staff, severance of diplomatic relations, travel bans, economic
+            sanctions, and other acts of retorsion. Under the codebook's response indicator,
+            retorsions are justified when state attribution or a breach of international law is
+            missing.</dd>
+          <dt>Reprisal / CM</dt>
+          <dd><q>Reprisal / Countermeasures (Art. 22, 49-54 ASR)</q> — otherwise unlawful measures
+            justified, per the codebook, only with <q>state-attribution &amp; breach of international
+            law</q>.</dd>
+          <dt>Use of force</dt>
+          <dd><q>Use of force (International Law)</q> — self-defence (Art. 21 ASR, Art. 51 UN
+            Charter), Art. 41 and 42 UN Charter, and Art. 4 and 5 North Atlantic Treaty.</dd>
+          <dt>No IL justif.</dt>
+          <dd><q>No justification under IL</q> — a response for which no justification under
+            international law was claimed or available.</dd>
+          <dt>TFEU sanctions</dt>
+          <dd><q>Restrictive measures (Art. 215 TFEU/Title V Chapter 2 TEU)</q> — EU sanctions
+            against countries (Art. 215(1)) or individuals (Art. 215(2)). The EuRepoC research paper
+            calls these <blockquote>&ldquo;currently the most robust and escalatory tool used to
+            sanction malicious cyber activities. They can be levied against third countries,
+            entities, or individuals to modify the target&rsquo;s behaviour through negative economic
+            ramifications.&rdquo; <span class="cite">(pp.&nbsp;5&ndash;6)</span></blockquote></dd>
+          <dt>Solidarity (222)</dt>
+          <dd><q>Solidarity clause (Art. 222 TFEU)</q> — EU assistance to a member state hit by a
+            serious cyberattack.</dd>
+          <dt>Collective def.</dt>
+          <dd><q>Collective regional self-defence (Art. 42 (7) TEU)</q> — the EU mutual defence
+            clause.</dd>
+          <dt>Emergency proc.</dt>
+          <dd><q>Proclamation of public emergency</q> — a state of emergency declared in response to
+            an incident.</dd>
+          <dt>National law enf.</dt>
+          <dd><q>Other legal measures on national level (e.g. law enforcement investigations,
+            arrests)</q> — the most common lane: domestic criminal investigations, indictments and
+            arrests.</dd>
+        </dl>
+        <p class="readmore">Read more: <a href="https://eurepoc.eu/wp-content/uploads/2023/07/EuRepoC_Codebook_1_2.pdf"
+          target="_blank" rel="noopener noreferrer">EuRepoC Codebook v1.2 (PDF)</a>, sections 50&ndash;55</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Weighted cyber intensity (lollipop height)</summary>
+      <div class="gloss-body">
+        <p>The height of each incident lollipop is EuRepoC's weighted cyber intensity, defined in
+          sections 33&ndash;40 of the codebook. The unweighted score is the <q>sum of data theft +
+          disruption + hijacking + physical effects spatial + physical effects temporal = maximum
+          score 10</q> <span class="cite">(section&nbsp;38)</span>, where each component scores
+          0&ndash;2 points: data theft (1 = non-sensitive or
+          non-classified information, 2 = sensitive or classified), disruption (1 = under 24 hours,
+          2 = over 24 hours), hijacking (1 = access without misuse, 2 = system misuse), and physical
+          effects by spatial spread (local vs. widespread) and duration (under vs. over 24 hours).</p>
+        <p>Incidents against targets of <q>very high political importance (e.g. critical
+          infrastructure, military)</q> have their score <q>multiplied by 1.5</q>
+          <span class="cite">(section&nbsp;39)</span>, applied only when a widespread disruption
+          affects services of critical importance to the functioning of the affected society. The
+          weighted result is the <q>unweighted cyber intensity multiplied with target multiplier /
+          brought up to round figure</q> <span class="cite">(section&nbsp;40)</span>, giving a scale
+          where 1&ndash;5 is low/moderate intensity, 6&ndash;10 high, and 11&ndash;15 very high.</p>
+        <p class="readmore">Read more: <a href="https://eurepoc.eu/wp-content/uploads/2023/07/EuRepoC_Codebook_1_2.pdf"
+          target="_blank" rel="noopener noreferrer">EuRepoC Codebook v1.2 (PDF)</a>, sections 32&ndash;40</p>
+      </div>
+    </details>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+<div id="tooltip"></div>
+
+<script>
+"use strict";
+
+/* ---------------- house style (mirrors final_scripts/style.py) ------------ */
+const C = {
+  surface: "#fcfcfb", ink: "#0b0b0b", inkSecondary: "#52514e", inkMuted: "#898781",
+  gridline: "#e1e0d9", baseline: "#c3c2b7",
+  blue: "#2a78d6", orange: "#eb6834", aqua: "#1baf7a", violet: "#4a3aa7",
+  darkRed: "#8f2020",
+};
+const DYAD_A = C.orange, DYAD_B = C.violet, CONFLICT_LINE = C.darkRed;
+const FONT = 'system-ui, "Segoe UI", Arial, sans-serif';
+
+const Y_INC_FLOOR = 0.25, LANE_SPACING = 1.2, ZONE_GAP = 1.0;
+
+const LEGAL_TYPE_CANONICAL = [
+  "Peaceful means: Retorsion", "Reprisal / Countermeasures", "Use of force",
+  "No justification under IL", "Restrictive measures (EU/TFEU)",
+  "Solidarity clause (Art. 222 TFEU)", "Collective self-defence (Art. 42 TEU)",
+  "Proclamation of emergency", "Other national legal measures",
+];
+const LEGAL_SHORT = {
+  "Peaceful means: Retorsion": "Peaceful Retorsion",
+  "Reprisal / Countermeasures": "Reprisal / CM",
+  "Use of force": "Use of force",
+  "No justification under IL": "No IL justif.",
+  "Restrictive measures (EU/TFEU)": "TFEU sanctions",
+  "Solidarity clause (Art. 222 TFEU)": "Solidarity (222)",
+  "Collective self-defence (Art. 42 TEU)": "Collective def.",
+  "Proclamation of emergency": "Emergency proc.",
+  "Other national legal measures": "National law enf.",
+};
+const POLITICAL_TYPE_CANONICAL = [];
+for (const actor of ["State", "Int'l Org", "EU", "EU MS"])
+  for (const kind of ["Preventive", "Cooperative", "Stabilizing", "Legislative", "Executive"])
+    POLITICAL_TYPE_CANONICAL.push(actor + ": " + kind);
+
+/* ---------------- data ---------------------------------------------------- */
+const DATA = window.EUREPOC;
+const LABEL = {};
+DATA.countries.forEach(c => { LABEL[c.name] = c.label; });
+const label = c => LABEL[c] || c;
+
+/* current view state */
+let view = null;      // { a, b, byId, plotted } after each render
+let selectedId = null;
+
+/* ---------------- helpers ------------------------------------------------- */
+const esc = s => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+function sameCountry(token, country) {
+  if (!token) return false;
+  return token.split(" - ")[0].trim().toLowerCase() === country.toLowerCase();
+}
+
+function pairIncidents(a, b) {
+  const out = [];
+  for (const inc of DATA.incidents) {
+    if (inc.ic === a && inc.rc.includes(b)) out.push({ inc, dir: "A->B" });
+    else if (inc.ic === b && inc.rc.includes(a)) out.push({ inc, dir: "B->A" });
+  }
+  out.sort((p, q) => p.inc.d < q.inc.d ? -1 : 1);
+  return out;
+}
+
+/* one exploded response row -> which side (A/B) responded */
+function respSide(dir, rec, a, b, refineByCountry) {
+  let side = dir === "A->B" ? "B" : "A";
+  if (refineByCountry && rec.country) {
+    if (sameCountry(rec.country, a)) side = "A";
+    else if (sameCountry(rec.country, b)) side = "B";
+  }
+  return side;
+}
+
+/* ---------------- figure builder (port of fig10 build()) ------------------ */
+function render(a, b) {
+  selectedId = null;
+  hideDetails();
+
+  const chartEl = document.getElementById("chart");
+  const noteEl = document.getElementById("empty-note");
+  if (a === b) {
+    chartEl.style.display = "none";
+    noteEl.style.display = "block";
+    noteEl.textContent = "Select two different countries.";
+    document.getElementById("pair-count").textContent = "";
+    view = null;
+    return;
+  }
+
+  const rows = pairIncidents(a, b);
+  const dispA = label(a), dispB = label(b);
+  const nAB = rows.filter(r => r.dir === "A->B").length;
+  const nBA = rows.filter(r => r.dir === "B->A").length;
+  document.getElementById("pair-count").textContent =
+    rows.length ? `${dispA} → ${dispB}: ${nAB} · ${dispB} → ${dispA}: ${nBA}` : "";
+
+  const chartDiv = document.getElementById("chart");
+  const emptyNote = document.getElementById("empty-note");
+  if (!rows.length) {
+    chartDiv.style.display = "none";
+    emptyNote.style.display = "block";
+    emptyNote.textContent =
+      `No recorded incidents between ${dispA} and ${dispB} in the EuRepoC database (from ${DATA.meta.start_year}).`;
+    view = null;
+    return;
+  }
+  chartDiv.style.display = "block";
+  emptyNote.style.display = "none";
+
+  const maxInt = Math.max(...rows.map(r => r.inc.wci), 0.001);
+
+  /* exploded responses with side + lane category */
+  const legalRows = [], polRows = [];
+  for (const { inc, dir } of rows) {
+    for (const rec of inc.legal)
+      legalRows.push({ inc, dir, rec, side: respSide(dir, rec, a, b, true) });
+    for (const rec of inc.pol)
+      polRows.push({ inc, dir, rec, side: respSide(dir, rec, a, b, false) });
+  }
+  const presentLegal = LEGAL_TYPE_CANONICAL.filter(t => legalRows.some(r => r.rec.cat === t));
+  const presentPol = POLITICAL_TYPE_CANONICAL.filter(t => polRows.some(r => r.rec.cat === t));
+  const legalY = {}, polY = {};
+  presentLegal.forEach((t, i) => { legalY[t] = -(i + 1) * LANE_SPACING; });
+  const nLegal = presentLegal.length, nPol = presentPol.length;
+  const separatorY = -(nLegal * LANE_SPACING + ZONE_GAP);
+  presentPol.forEach((t, i) => { polY[t] = separatorY - (i + 1) * LANE_SPACING; });
+
+  /* HIIK step line: annual max, held forward to the last incident */
+  const hiikByYear = {};
+  for (const { inc } of rows) {
+    const y = +inc.d.slice(0, 4);
+    hiikByYear[y] = Math.max(hiikByYear[y] || 0, inc.hiik);
+  }
+  const years = Object.keys(hiikByYear).map(Number).sort((x, y) => x - y);
+  const xHiik = years.map(y => `${y}-01-01`), yHiik = years.map(y => hiikByYear[y]);
+  const lastDate = rows[rows.length - 1].inc.d;
+  if (xHiik.length && lastDate > xHiik[xHiik.length - 1]) {
+    xHiik.push(lastDate); yHiik.push(yHiik[yHiik.length - 1]);
+  }
+
+  /* vertical range and right-axis alignment */
+  const yTop = maxInt + 1.5;
+  let yBot = -(nLegal * LANE_SPACING + 0.8);
+  if (nPol) yBot = Math.min(yBot, Math.min(...Object.values(polY)) - LANE_SPACING * 0.8);
+  const y2Min = 5 * yBot / maxInt, y2Max = 5 * yTop / maxInt;
+
+  const traces = [];
+  /* hover-glow overlay: drawn first so it sits under the data marks */
+  const GLOW_INDEX = 0;
+  traces.push({ x: [], y: [], mode: "markers", showlegend: false, hoverinfo: "skip",
+                marker: { symbol: [], color: "rgba(237,161,0,0.38)", size: 21,
+                          line: { color: "#eda100", width: 2.2 } } });
+
+  const byId = {};   // incident id -> { inc, dir, hl: [{x,y,sym}] }
+  const reg = (inc, dir) => byId[inc.id] || (byId[inc.id] = { inc, dir, hl: [] });
+
+  const stems = (pts) => {   // pts: [{x, y0, y1}]
+    const xs = [], ys = [];
+    for (const p of pts) { xs.push(p.x, p.x, null); ys.push(p.y0, p.y1, null); }
+    return { xs, ys };
+  };
+
+  /* --- incident lollipops --- */
+  for (const [dir, colour] of [["A->B", DYAD_A], ["B->A", DYAD_B]]) {
+    const sub = rows.filter(r => r.dir === dir);
+    if (!sub.length) continue;
+    const yM = sub.map(r => Math.max(r.inc.wci, Y_INC_FLOOR));
+    const st = stems(sub.map((r, i) => ({ x: r.inc.d, y0: 0, y1: yM[i] })));
+    traces.push({ x: st.xs, y: st.ys, mode: "lines", showlegend: false,
+                  line: { color: colour, width: 0.9 }, hoverinfo: "skip" });
+    const hover = [], lineC = [], lineW = [], cdata = [];
+    sub.forEach((r, i) => {
+      const inc = r.inc;
+      reg(inc, dir).hl.push({ x: inc.d, y: yM[i], sym: "circle-open" });
+      hover.push(
+        `<b>${esc(inc.name) || "Incident"}</b><br>` +
+        `${dir === "A->B" ? esc(dispA) + " → " + esc(dispB) : esc(dispB) + " → " + esc(dispA)}  ·  ${inc.d}<br>` +
+        `Intensity: ${inc.wci}  ·  ${esc(inc.itype) || "-"}<br>` +
+        `Actor: ${esc(inc.iname) || "-"} (${esc(inc.icat) || "-"})<br>` +
+        `Responses: ${inc.legal.length} legal · ${inc.pol.length} political<br>` +
+        `<i>Click for details</i>`);
+      lineC.push(inc.state ? C.darkRed : "white");
+      lineW.push(inc.state ? 2.0 : 0.6);
+      cdata.push(inc.id);
+    });
+    traces.push({
+      x: sub.map(r => r.inc.d), y: yM, mode: "markers", showlegend: false,
+      marker: { color: colour, size: 9, opacity: 0.88, line: { color: lineC, width: lineW } },
+      customdata: cdata, text: hover, hoverinfo: "none",
+    });
+  }
+
+  /* legend proxies (the real traces carry per-marker outlines) */
+  for (const [name, colour, lc, lw, rank] of [
+    [`${dispA} initiated`, DYAD_A, "white", 0.6, 1],
+    [`${dispB} initiated`, DYAD_B, "white", 0.6, 2],
+    ["Not state-affiliated", C.inkMuted, "white", 0.6, 3],
+    ["State-affiliated", C.inkMuted, C.darkRed, 2.0, 4],
+  ]) {
+    traces.push({ x: [null], y: [null], mode: "markers", name, legendrank: rank,
+                  marker: { color: colour, size: 9, opacity: 0.88, line: { color: lc, width: lw } } });
+  }
+
+  if (xHiik.length) {
+    traces.push({ x: xHiik, y: yHiik, mode: "lines", name: "HIIK conflict level",
+                  line: { color: CONFLICT_LINE, width: 2.2, shape: "hv" }, yaxis: "y2",
+                  text: xHiik.map((d, i) => `<b>HIIK conflict level ${yHiik[i]}</b><br>${d.slice(0, 4)}`),
+                  hoverinfo: "none", legendrank: 10 });
+  }
+
+  /* --- response lollipops (legal diamonds, political triangles) --- */
+  const addResponses = (rowsR, laneY, symbol, dash, kindName, rankBase) => {
+    for (const [side, colour, who, rank] of [["A", DYAD_A, dispA, rankBase], ["B", DYAD_B, dispB, rankBase + 1]]) {
+      const sub = rowsR.filter(r => r.side === side && laneY[r.rec.cat] !== undefined);
+      if (!sub.length) continue;
+      const yM = sub.map(r => laneY[r.rec.cat]);
+      const st = stems(sub.map((r, i) => ({ x: r.rec.d, y0: yM[i], y1: 0 })));
+      traces.push({ x: st.xs, y: st.ys, mode: "lines", showlegend: false,
+                    line: { color: colour, width: 0.9, dash }, hoverinfo: "skip" });
+      const hover = [], cdata = [];
+      sub.forEach((r, i) => {
+        reg(r.inc, r.dir).hl.push({ x: r.rec.d, y: yM[i], sym: symbol + "-open" });
+        hover.push(
+          `<b>${esc(kindName)} response – ${esc(who)}</b><br>` +
+          `Incident: ${esc(r.inc.name) || r.inc.d}<br>` +
+          `Response: ${r.rec.d}  ·  ${esc(r.rec.cat)}<br>` +
+          `Actor: ${esc(r.rec.actor) || "-"}<br><i>Click for details</i>`);
+        cdata.push(r.inc.id);
+      });
+      traces.push({
+        x: sub.map(r => r.rec.d), y: yM, mode: "markers", name: `${who} ${kindName.toLowerCase()} resp.`,
+        marker: { symbol, color: colour, size: 11, opacity: 0.9, line: { color: "white", width: 0.8 } },
+        customdata: cdata, text: hover, hoverinfo: "none", legendrank: rank,
+      });
+    }
+  };
+  addResponses(legalRows, legalY, "diamond", "dot", "Legal", 5);
+  addResponses(polRows, polY, "triangle-up", "dash", "Political", 7);
+
+  /* --- highlight overlay (kept last; restyled on click) --- */
+  const HL_INDEX = traces.length;
+  traces.push({ x: [], y: [], mode: "markers", showlegend: false, hoverinfo: "skip",
+                marker: { symbol: [], color: "rgba(0,0,0,0)", size: 17,
+                          line: { color: C.darkRed, width: 2.6 } } });
+
+  /* --- shapes, annotations, axes --- */
+  const polBase = nPol ? separatorY : yBot;
+  const shapes = [
+    { type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y", y0: 0, y1: yTop,
+      fillcolor: "rgba(42,120,214,0.06)", line: { width: 0 }, layer: "below" },
+    { type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y", y0: polBase, y1: 0,
+      fillcolor: "rgba(235,104,52,0.06)", line: { width: 0 }, layer: "below" },
+  ];
+  if (nPol) {
+    shapes.push({ type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y", y0: yBot, y1: separatorY,
+                  fillcolor: "rgba(27,175,122,0.06)", line: { width: 0 }, layer: "below" });
+    shapes.push({ type: "line", xref: "paper", x0: 0, x1: 1, yref: "y", y0: separatorY, y1: separatorY,
+                  line: { color: C.baseline, width: 1.2, dash: "dash" } });
+  }
+  shapes.push({ type: "line", xref: "paper", x0: 0, x1: 1, yref: "y", y0: 0, y1: 0,
+                line: { color: C.inkSecondary, width: 1.8 } });
+
+  const xLeft = rows[0].inc.d;
+  const annotations = [
+    { x: xLeft, y: yTop - 0.9, text: "Cyber incidents", showarrow: false,
+      xanchor: "left", font: { size: 14, color: C.blue } },
+  ];
+  if (nLegal) annotations.push({
+    x: xLeft, y: -(nLegal * LANE_SPACING / 2 + LANE_SPACING / 4), text: "Legal responses",
+    showarrow: false, xanchor: "left", font: { size: 13, color: C.orange } });
+  if (nPol) {
+    annotations.push({
+      x: xLeft, y: separatorY - (nPol * LANE_SPACING / 2 + LANE_SPACING / 4), text: "Political responses",
+      showarrow: false, xanchor: "left", font: { size: 13, color: C.aqua } });
+    annotations.push({
+      x: xLeft, y: separatorY + 0.05, text: "Legal responses above  |  Political responses below",
+      showarrow: false, xanchor: "left", yanchor: "bottom", font: { size: 12, color: C.inkMuted } });
+  }
+
+  const tickvals = [], ticktext = [];
+  for (let v = 1; v <= Math.floor(maxInt) + 1; v++) { tickvals.push(v); ticktext.push(String(v)); }
+  for (const t of presentLegal) { tickvals.push(legalY[t]); ticktext.push(LEGAL_SHORT[t] || t); }
+  for (const t of presentPol) { tickvals.push(polY[t]); ticktext.push(t); }
+
+  const axis = (extra) => Object.assign({
+    showline: true, linecolor: C.baseline, linewidth: 1.2, mirror: true,
+    ticks: "outside", tickcolor: C.baseline, ticklen: 4,
+    showgrid: true, gridcolor: C.gridline, gridwidth: 1, zeroline: false,
+  }, extra);
+
+  /* --- responsive layout: legend below the chart, width-aware margins --- */
+  const nLanes = nLegal + nPol;
+  const w = chartDiv.clientWidth || 1200;
+  const narrow = w < 760;
+  const nEntries = traces.filter(t => t.name).length;
+  const entryW = narrow ? 160 : 205;
+  const legendRows = Math.max(1, Math.ceil(nEntries * entryW / Math.max(w - 40, 260)));
+  const legendH = legendRows * 26 + 12;
+  const mL = narrow ? 130 : 175, mR = narrow ? 80 : 130, mT = narrow ? 74 : 96;
+  const mB = 80 + legendH;
+  const height = Math.max(640, 520 + nLanes * 40) + legendH;
+  const legendY = -(76 / (height - mT - mB));   // clear of the x-axis title
+
+  /* split left-axis titles: one per zone instead of a single centred title */
+  annotations.unshift(
+    { xref: "paper", x: 0, xshift: -(mL - 16), yref: "y", y: yTop / 2,
+      text: "Weighted cyber intensity", textangle: -90, showarrow: false,
+      font: { size: narrow ? 11.5 : 13.5, color: C.ink } },
+    { xref: "paper", x: 0, xshift: -(mL - 16), yref: "y", y: yBot / 2,
+      text: "Response type", textangle: -90, showarrow: false,
+      font: { size: narrow ? 11.5 : 13.5, color: C.ink } });
+
+  const titleText = narrow
+    ? `Cyber Incidents and Responses<br>${dispA} – ${dispB}`
+    : `Timeline of Cyber Incidents, Legal and Political Responses Between ${dispA} and ${dispB}` +
+      `<br><sup>EuRepoC incident database, from ${DATA.meta.start_year}</sup>`;
+
+  const layout = {
+    font: { family: FONT, size: 14, color: C.ink },
+    paper_bgcolor: C.surface, plot_bgcolor: C.surface,
+    title: { text: titleText, font: { size: narrow ? 15 : 19, color: C.ink },
+             x: 0.5, xanchor: "center", y: 1, yanchor: "top", pad: { t: 14 } },
+    xaxis: axis({ title: { text: "Date" }, tickformat: "%Y", dtick: "M24" }),
+    yaxis: axis({ range: [yBot, yTop], tickvals, ticktext,
+                  tickfont: { size: narrow ? 11 : 12.5 } }),
+    yaxis2: {
+      title: { text: "Offline conflict intensity (HIIK level)", font: { color: CONFLICT_LINE } },
+      overlaying: "y", side: "right", range: [y2Min, y2Max],
+      tickvals: [0, 1, 2, 3, 4, 5],
+      ticktext: ["0 None", "1 Dispute", "2 Non-viol.", "3 Viol.crisis", "4 Ltd war", "5 War"],
+      showgrid: false, zeroline: false, showline: false,
+      tickfont: { size: narrow ? 11 : 12.5, color: CONFLICT_LINE },
+    },
+    legend: {
+      orientation: "h", yanchor: "top", y: legendY, xanchor: "center", x: 0.5,
+      bgcolor: "rgba(252,252,251,0.85)", bordercolor: C.baseline, borderwidth: 1,
+      font: { size: narrow ? 11.5 : 12.5 },
+      entrywidthmode: "pixels", entrywidth: entryW - 5, tracegroupgap: 6,
+    },
+    height, margin: { l: mL, r: mR, t: mT, b: mB },
+    hovermode: "closest",
+    shapes, annotations,
+  };
+
+  Plotly.react(chartDiv, traces, layout,
+               { responsive: true, displaylogo: false,
+                 modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"] });
+  view = { a, b, byId, hlIndex: HL_INDEX, glowIndex: GLOW_INDEX };
+
+  if (chartDiv.removeAllListeners)
+    for (const e of ["plotly_click", "plotly_hover", "plotly_unhover"])
+      chartDiv.removeAllListeners(e);
+  chartDiv.on("plotly_click", ev => {
+    const p = ev.points && ev.points[0];
+    if (p && typeof p.customdata === "number") selectIncident(p.customdata);
+  });
+  chartDiv.on("plotly_hover", ev => {
+    const p = ev.points && ev.points[0];
+    if (!p) return;
+    if (typeof p.customdata === "number") glowIncident(p.customdata);
+    if (p.text) showTooltip(p.text, ev.event);
+  });
+  chartDiv.on("plotly_unhover", () => { clearGlow(); hideTooltip(); });
+}
+
+/* ---------------- hover: glow + tooltip below the cursor ------------------ */
+function glowIncident(id) {
+  if (!view || !view.byId[id]) return;
+  const hl = view.byId[id].hl;
+  Plotly.restyle("chart", {
+    x: [hl.map(p => p.x)], y: [hl.map(p => p.y)],
+    "marker.symbol": [hl.map(p => p.sym.replace("-open", ""))],
+  }, [view.glowIndex]);
+}
+
+function clearGlow() {
+  if (view) Plotly.restyle("chart", { x: [[]], y: [[]], "marker.symbol": [[]] }, [view.glowIndex]);
+}
+
+function showTooltip(html, mouseEv) {
+  const tip = document.getElementById("tooltip");
+  tip.innerHTML = html;
+  tip.style.display = "block";
+  const mx = mouseEv ? mouseEv.clientX : 0, my = mouseEv ? mouseEv.clientY : 0;
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let left = mx - tw / 2, top = my + 24;                       // below the cursor
+  left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+  if (top + th > window.innerHeight - 8) top = my - th - 18;   // flip above if cramped
+  tip.style.left = left + "px";
+  tip.style.top = top + "px";
+}
+
+function hideTooltip() {
+  document.getElementById("tooltip").style.display = "none";
+}
+
+/* ---------------- selection: highlight + details panel -------------------- */
+function selectIncident(id, scroll = true) {
+  if (!view || !view.byId[id]) return;
+  selectedId = id;
+  const entry = view.byId[id];
+  const hl = entry.hl;
+  Plotly.restyle("chart", {
+    x: [hl.map(p => p.x)], y: [hl.map(p => p.y)],
+    "marker.symbol": [hl.map(p => p.sym)],
+  }, [view.hlIndex]);
+  showDetails(entry);
+  if (scroll)
+    document.getElementById("details").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function clearSelection() {
+  selectedId = null;
+  if (view) Plotly.restyle("chart", { x: [[]], y: [[]], "marker.symbol": [[]] }, [view.hlIndex]);
+  hideDetails();
+}
+
+function respTable(recs, who) {
+  if (!recs.length) return '<p class="none">None recorded.</p>';
+  const rows = recs.map(r =>
+    `<tr><td style="white-space:nowrap">${esc(r.rec.d)}</td>` +
+    `<td>${esc(label(view ? (r.side === "A" ? view.a : view.b) : ""))}</td>` +
+    `<td>${esc(r.rec.cat)}</td>` +
+    `<td>${esc(r.rec.actor) || "–"}</td>` +
+    `<td>${esc(r.rec.raw) || "–"}</td></tr>`).join("");
+  return `<table><thead><tr><th>Date</th><th>Responding side</th><th>Category</th>` +
+         `<th>Actor</th><th>Recorded type</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function showDetails(entry) {
+  const inc = entry.inc, dir = entry.dir;
+  const dispA = label(view.a), dispB = label(view.b);
+  const from = dir === "A->B" ? dispA : dispB, to = dir === "A->B" ? dispB : dispA;
+
+  document.getElementById("det-title").innerHTML =
+    esc(inc.name || "Unnamed incident") +
+    (inc.state ? '<span class="badge">state or state-affiliated initiator</span>' : "");
+  document.getElementById("det-meta").innerHTML =
+    `${esc(from)} → ${esc(to)} · start ${esc(inc.d)} · ` +
+    `weighted cyber intensity ${esc(inc.wci)} · ${esc(inc.itype) || "type n/a"} · ` +
+    `initiator: ${esc(inc.iname) || "unknown"} (${esc(inc.icat) || "category n/a"}) · ` +
+    `EuRepoC ID ${esc(inc.id)}`;
+  document.getElementById("det-desc").textContent = inc.desc || "";
+
+  const legalRecs = inc.legal.map(rec => ({ rec, side: respSide(dir, rec, view.a, view.b, true) }));
+  const polRecs = inc.pol.map(rec => ({ rec, side: respSide(dir, rec, view.a, view.b, false) }));
+  document.getElementById("det-legal").innerHTML = respTable(legalRecs);
+  document.getElementById("det-pol").innerHTML = respTable(polRecs);
+
+  document.getElementById("det-sources").innerHTML = inc.urls.length
+    ? '<ul class="sources">' + inc.urls.map(u =>
+        `<li><a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a></li>`).join("") + "</ul>"
+    : '<p class="none">No source URLs recorded.</p>';
+
+  document.getElementById("details").style.display = "block";
+}
+
+function hideDetails() {
+  document.getElementById("details").style.display = "none";
+}
+
+/* ---------------- controls ------------------------------------------------ */
+function populateSelect(sel) {
+  for (const c of DATA.countries) {
+    const opt = document.createElement("option");
+    opt.value = c.name;
+    opt.textContent = `${c.label} (${c.n})`;
+    sel.appendChild(opt);
+  }
+}
+
+function init() {
+  const selA = document.getElementById("sel-a"), selB = document.getElementById("sel-b");
+  populateSelect(selA); populateSelect(selB);
+
+  const names = DATA.countries.map(c => c.name);
+  const top = [...DATA.countries].sort((x, y) => y.n - x.n).map(c => c.name);
+  selA.value = names.includes("Russia") ? "Russia" : top[0];
+  selB.value = names.includes("Ukraine") ? "Ukraine" : top.find(n => n !== selA.value);
+
+  /* country -> set of countries it shares at least one incident with */
+  const partners = {};
+  for (const inc of DATA.incidents) {
+    for (const r of inc.rc) {
+      if (r === inc.ic) continue;
+      (partners[inc.ic] = partners[inc.ic] || new Set()).add(r);
+      (partners[r] = partners[r] || new Set()).add(inc.ic);
+    }
+  }
+  const markPaired = () => {
+    const pa = partners[selB.value] || new Set();
+    for (const opt of selA.options) opt.classList.toggle("paired", pa.has(opt.value));
+    const pb = partners[selA.value] || new Set();
+    for (const opt of selB.options) opt.classList.toggle("paired", pb.has(opt.value));
+  };
+
+  const rerender = () => { markPaired(); render(selA.value, selB.value); };
+  selA.addEventListener("change", rerender);
+  selB.addEventListener("change", rerender);
+  document.getElementById("swap").addEventListener("click", () => {
+    const t = selA.value; selA.value = selB.value; selB.value = t; rerender();
+  });
+
+  /* re-render on resize so margins, legend and title adapt; keep the selection */
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (!view) return;
+      const prev = selectedId;
+      render(selA.value, selB.value);
+      if (prev != null && view && view.byId[prev]) selectIncident(prev, false);
+    }, 250);
+  });
+  document.getElementById("print-btn").addEventListener("click", () => window.print());
+  document.getElementById("close-details").addEventListener("click", clearSelection);
+
+  document.getElementById("footer").innerHTML =
+    `Data: European Repository of Cyber Incidents (EuRepoC), <code>${esc(DATA.meta.source)}</code>, ` +
+    `${esc(DATA.meta.n_incidents)} incidents with a known initiator and receiver country from ` +
+    `${esc(DATA.meta.start_year)} (legal responses are recorded systematically only from 2017). ` +
+    `Offline conflict levels follow the HIIK barometer as coded by EuRepoC. Generated ${esc(DATA.meta.generated)}.`;
+
+  rerender();
+}
+
+init();
+</script>
+</body>
+</html>
