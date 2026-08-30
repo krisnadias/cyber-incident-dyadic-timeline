@@ -4,6 +4,8 @@ Interactive timeline of cyber incidents and the legal and political responses
 between any two countries, built on the
 [European Repository of Cyber Incidents (EuRepoC)](https://eurepoc.eu/) database.
 
+**Interactive Graph Available at: https://krisnadias.github.io/cyber-incident-dyadic-timeline/**
+
 Pick two countries from the menu and the chart renders:
 
 - **Above the axis** — cyber incidents as lollipops (height = EuRepoC weighted
@@ -27,26 +29,6 @@ button prints the current chart plus the open details panel.
 | `data.js` | Pre-processed incident data (generated, do not edit by hand). |
 | `plotly.min.js` | Vendored Plotly.js, so no CDN is needed. |
 | `build_data.py` | Regenerates `data.js` from a EuRepoC Excel export. |
-
-## Publishing on GitHub Pages
-
-Push this folder to a repository, then in the repo settings enable
-**Pages → Deploy from a branch** and point it at the branch/folder containing
-`index.html`.
-
-## Updating the data
-
-Download a fresh full export from EuRepoC and run:
-
-```
-py -3 build_data.py path/to/eurepoc_export.xlsx
-```
-
-Requires Python with `pandas` and `openpyxl`. The script keeps incidents from
-2016 onward that have a known initiator country, a known receiver country and a
-weighted cyber intensity (EuRepoC records legal responses systematically only
-from 2017). Response type lanes follow EuRepoC codebook sections 52 (legal) and
-25 (political).
 
 ## Data citation
 
